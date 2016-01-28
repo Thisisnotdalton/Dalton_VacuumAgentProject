@@ -22,6 +22,50 @@ public class DmnReflexModelAgent extends VacuumAgent {
     private int x, y;
 
     /**
+     * A private Vertex class for path finding and representing the graph.
+     */
+    private class Vertex {
+
+        //a label to differentiate between vertices
+        private int label;
+        //if we have seen this vertex before
+        private boolean visited;
+        //adjacent vertices
+        private Edge[] adjacent;
+        //the minimum distance to this Vertex
+        private double distance; //we use a double here for its infinity value
+
+        public Vertex(int label) {
+            this.label = label;
+            reset();
+        }
+
+        /**
+         * Reset the values used for Dijkstra's algorithm.
+         */
+        public void reset() {
+            visited = false;
+            distance = Double.POSITIVE_INFINITY;
+        }
+
+        public int compareTo(Vertex other) {
+            return Double.compare(distance, other.distance);
+        }
+    }
+
+    private class Edge {
+
+        public final Vertex target;
+
+        public Edge(Vertex target) {
+            this.target = target;
+        }
+    }
+
+    
+    
+    
+    /**
      * MapEntry will function as enumeration using a byte to represent the
      * status of a map tile.
      *
