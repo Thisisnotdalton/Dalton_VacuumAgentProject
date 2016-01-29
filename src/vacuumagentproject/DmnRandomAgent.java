@@ -41,7 +41,7 @@ public class DmnRandomAgent extends VacuumAgent {
             }
             pw.close();
         } catch (IOException e) {
-            System.out.println("Error initializing PrintWriter for output file " + outFileName);
+            //System.out.println("Error initializing PrintWriter for output file " + outFileName);
         }
     }
 
@@ -55,7 +55,7 @@ public class DmnRandomAgent extends VacuumAgent {
     }
 
     public static void outputPerformance(int testSize, double rating) {
-        //System.out.print(perf);
+        ////System.out.print(perf);
         //outLines.add(perf);
         results[(testSize-minSize)]+=(100*rating)/simulations;
         

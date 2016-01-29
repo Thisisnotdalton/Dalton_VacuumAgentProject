@@ -167,45 +167,45 @@ public class DmnReflexModelAgent extends VacuumAgent {
             //if the cell is dirty, clean it
             //update our map too
             map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] = MapEntry.clean;
-            System.out.println("Cleaning cell.");
+            //System.out.println("Cleaning cell.");
             unexploredCount--;
             return VacuumAction.SUCK;
         } else {
             if (map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] == MapEntry.empty) {
 
                 map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] = MapEntry.clean;
-                System.out.println("This cell was already clean, but we didn't know that...");
+                //System.out.println("This cell was already clean, but we didn't know that...");
                 unexploredCount--;
             }
             //now check each adjacent cell
             checkAdjacentCells(percept);
             //check four basic directions for empty, but not necessarily clean cells
             for (int t = 0; t < 4; t++) {
-                System.out.printf("Direction:%d\tX:%d\tY:%d\tMovementChanges:(%d,%d)\n", direction, (movementChanges[direction + 1] + x + map[0].length) % map[0].length, (movementChanges[direction] + y + map.length) % map.length, movementChanges[direction + 1], movementChanges[direction]);
+                //System.out.printf("Direction:%d\tX:%d\tY:%d\tMovementChanges:(%d,%d)\n", direction, (movementChanges[direction + 1] + x + map[0].length) % map[0].length, (movementChanges[direction] + y + map.length) % map.length, movementChanges[direction + 1], movementChanges[direction]);
                 //if we don't know if this tile is clean
                 if (map[(movementChanges[direction] + y + map.length) % map.length][(movementChanges[direction + 1] + x + map[0].length) % map[0].length] == MapEntry.empty) {
                     //Go that way!
                     x += movementChanges[direction + 1];
                     y += movementChanges[direction];
-                    System.out.println("Cell is empty");
+                    //System.out.println("Cell is empty");
                     actionsTaken.addFirst(direction);
                     return movements[direction];
                 } else {
                     //try turning left
-                    System.out.println("Cell is not empty, trying another cell.");
+                    //System.out.println("Cell is not empty, trying another cell.");
                     turn(true);
                 }
             }
             if (unexploredCount > 0) {
-                System.out.println("Not sure where to go...backtracking.");
+                //System.out.println("Not sure where to go...backtracking.");
                 direction = (2 + actionsTaken.poll()) % 4;
                 x += movementChanges[direction + 1];
                 y += movementChanges[direction];
-                System.out.println("Cell is empty");
+                //System.out.println("Cell is empty");
                 return movements[direction];
             }
         }
-        System.out.println("Mission Complete?");
+        //System.out.println("Mission Complete?");
         return VacuumAction.STOP;
     }
 }
