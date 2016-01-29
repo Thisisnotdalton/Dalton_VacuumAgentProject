@@ -28,7 +28,7 @@ public class DmnRandomAgent extends VacuumAgent {
         for (int i = 0; i < results.length; i++) {
             results[i] = 0;
         }
-        String paramString = "-t 7000000 -A DmnReflexModelAgent -d ";
+        String paramString = "-A DmnReflexModelAgent -d ";
         for (gridSize = minSize; gridSize <= maxSize; gridSize++) {
             for (int simNum = 0; simNum < simulations; simNum++) {
                 VaccumAgentDriver.main((paramString + gridSize + " " + gridSize).toString().split(" "));
