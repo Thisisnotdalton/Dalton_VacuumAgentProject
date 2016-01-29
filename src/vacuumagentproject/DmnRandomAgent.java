@@ -15,11 +15,11 @@ public class DmnRandomAgent extends VacuumAgent {
     public static int n = 2;
     public static String outString = "";
     private static PrintWriter pw;
-    private static String outFileName;
+    private static String outFileName="DmnReflexOutputFile";
     public static int gridSize;
     public static boolean isMain = false;
     private static int minSize = 3, maxSize = 25;
-    private static int simulations = 10;
+    private static int simulations = 1000;
     private static double[] results;
 
     public static void main(String[] args) {
@@ -28,16 +28,21 @@ public class DmnRandomAgent extends VacuumAgent {
         for (int i = 0; i < results.length; i++) {
             results[i] = 0;
         }
-        String paramString = "-t 7000000 -A DmnRandomAgent -d ";
+        String paramString = "-t 7000000 -A DmnReflexModelAgent -d ";
         for (gridSize = minSize; gridSize <= maxSize; gridSize++) {
             for (int simNum = 0; simNum < simulations; simNum++) {
                 VaccumAgentDriver.main((paramString + gridSize + " " + gridSize).toString().split(" "));
             }
         }
         try {
-            pw = new PrintWriter(outFileName);
+            pw = new PrintWriter(outFileName+"X.txt");
             for (int i = 0; i < results.length; i++) {
-                pw.printf("%d\t%.5f\n",i,results[i]);
+                pw.printf("%d\n",i+minSize);
+            }
+            pw.close();
+            pw = new PrintWriter(outFileName+"Y.txt");
+            for (int i = 0; i < results.length; i++) {
+                pw.printf("%.5f\n",results[i]);
             }
             pw.close();
         } catch (IOException e) {
@@ -46,7 +51,7 @@ public class DmnRandomAgent extends VacuumAgent {
     }
 
     public DmnRandomAgent() {
-        this("DmnRandomOutputFile.txt");
+        this("DmnReflexOutputFile.txt");
     }
 
     public DmnRandomAgent(String outFileName) {
