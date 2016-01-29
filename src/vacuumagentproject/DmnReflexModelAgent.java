@@ -4,6 +4,8 @@
  */
 package vacuumagentproject;
 
+import java.util.LinkedList;
+
 public class DmnReflexModelAgent extends VacuumAgent {
 
     /*
@@ -18,7 +20,10 @@ public class DmnReflexModelAgent extends VacuumAgent {
     private int[] movementChanges = {0, 1, 0, -1, 0};
     //An integer determining which movement action we are facing
     private int direction;
-
+    //keep track of all the movement actions taken
+    private LinkedList<Integer> actionsTaken;
+    //keep track of how many unexplored empty tiles are known of
+    private int unexploredCount;
     private int x, y;
 
     /**
@@ -101,6 +106,8 @@ public class DmnReflexModelAgent extends VacuumAgent {
 
     public DmnReflexModelAgent() {
         map = new MapEntry[1000][1000];
+        unexploredCount = 1;
+        actionsTaken = new LinkedList<Integer>();
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
                 map[i][j] = MapEntry.unknown;
@@ -126,6 +133,7 @@ public class DmnReflexModelAgent extends VacuumAgent {
                 } else {
                     //otherwise, it's an empty space,but we don't know it's clean yet...we'll check that later
                     map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length] = MapEntry.empty;
+                    unexploredCount++;
                 }
             }
         }
@@ -153,14 +161,22 @@ public class DmnReflexModelAgent extends VacuumAgent {
      * @return the next action this vacuum agent will perform.
      */
     public VacuumAction getAction(VacuumBumpPercept percept) {
+
         //check current cell for dirt
         if (percept.dirtSensor() == Status.DIRTY) {
             //if the cell is dirty, clean it
             //update our map too
             map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] = MapEntry.clean;
             System.out.println("Cleaning cell.");
+            unexploredCount--;
             return VacuumAction.SUCK;
         } else {
+            if (map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] == MapEntry.empty) {
+
+                map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] = MapEntry.clean;
+                System.out.println("This cell was already clean, but we didn't know that...");
+                unexploredCount--;
+            }
             //now check each adjacent cell
             checkAdjacentCells(percept);
             //check four basic directions for empty, but not necessarily clean cells
@@ -172,6 +188,7 @@ public class DmnReflexModelAgent extends VacuumAgent {
                     x += movementChanges[direction + 1];
                     y += movementChanges[direction];
                     System.out.println("Cell is empty");
+                    actionsTaken.addFirst(direction);
                     return movements[direction];
                 } else {
                     //try turning left
@@ -179,9 +196,16 @@ public class DmnReflexModelAgent extends VacuumAgent {
                     turn(true);
                 }
             }
-            System.out.println("Dead end.");
+            if (unexploredCount > 0) {
+                System.out.println("Not sure where to go...backtracking.");
+                direction = (2 + actionsTaken.poll()) % 4;
+                x += movementChanges[direction + 1];
+                y += movementChanges[direction];
+                System.out.println("Cell is empty");
+                return movements[direction];
+            }
         }
-
+        System.out.println("Mission Complete?");
         return VacuumAction.STOP;
     }
 }
