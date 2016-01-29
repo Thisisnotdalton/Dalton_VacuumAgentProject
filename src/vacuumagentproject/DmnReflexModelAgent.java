@@ -47,61 +47,7 @@ public class DmnReflexModelAgent extends VacuumAgent {
      * A is whether we know that the tile is clean (1 if clean, otherwise 0)
      */
     private enum MapEntry {
-
-        unknown(false), obstacle(true, false), empty(false, false), clean(false, true);
-
-        /**
-         * Create a new MapEntry based on the current state of another MapEntry.
-         *
-         * @param other the MapEntry to copy.
-         */
-        MapEntry(MapEntry other) {
-            state = other.getState();
-        }
-
-        /**
-         * Create a new MapEntry which is checked if checked is true, otherwise
-         * everything about the tile is unknown.
-         *
-         * @param checked
-         */
-        MapEntry(boolean checked) {
-            state = (byte) (checked ? 1 : 0);
-        }
-
-        /**
-         * Create a tile in which we have checked the tile and at least know if
-         * it is an obstacle and potentially if it's clean.
-         *
-         * @param obstacle whether the tile is obstructed.
-         * @param clean whether we know the tile is clean.
-         */
-        MapEntry(boolean obstacle, boolean clean) {
-            state = (byte) (1 + (obstacle ? 2 : 0) + (clean ? 4 : 0));
-        }
-
-        //this state of all properties of the tile, i.e. clena, obstacle, etc.
-        private byte state;
-
-        /**
-         * Return this MapEntry's state.
-         *
-         * @return this MapEntry's state.
-         */
-        private byte getState() {
-            return state;
-        }
-
-        /**
-         * Compare equivalence of two MapEntry's by their state.
-         *
-         * @param other the other MapEntry to check for equivalence.
-         * @return true if the MapEntry's have the same state.
-         */
-        public boolean equals(MapEntry other) {
-            return (other.getState() == state);
-        }
-
+        unknown, obstacle, empty, clean;
     }
 
     public DmnReflexModelAgent() {
