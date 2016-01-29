@@ -4,17 +4,13 @@
  */
 package vacuumagentproject;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
-
 public class DmnReflexModelAgent extends VacuumAgent {
 
     /*
      This 2d array of map entries will represent the map of the area to be vacuumed.
      The first index will be for the rows (y) and the second will be for the columns (x).
      */
-    private Vertex[][] map;
+    private MapEntry[][] map;
 
     //A list of all of the movements we can perform to change position
     private VacuumAction[] movements = {VacuumAction.RIGHT, VacuumAction.BACK, VacuumAction.LEFT, VacuumAction.FORWARD};
@@ -22,146 +18,8 @@ public class DmnReflexModelAgent extends VacuumAgent {
     private int[] movementChanges = {0, 1, 0, -1, 0};
     //An integer determining which movement action we are facing
     private int direction;
-    //the current position of the agent
+
     private int x, y;
-    //A queue of all of the dirty vertices
-    private LinkedList<Vertex> dirtyVertices;
-
-    //an instance of our Dijkstra path finder
-    private Dijkstra pathComputer;
-
-    private List<Vertex> pathToDirt;
-
-    /**
-     * A private Vertex class for path finding and representing the graph.
-     */
-    private class Vertex {
-
-        //a label to differentiate between vertices
-        private int label;
-        //if we have seen this vertex before
-        private boolean visited;
-        //adjacent vertices
-        private Edge[] adjacent;
-        //number of edges
-        int edges;
-        //the minimum distance to this Vertex
-        private double distance; //we use a double here for its infinity value
-        //the parent of this vertex
-        private Vertex parent;
-        //map entry state of vertex
-        private MapEntry state;
-
-        public Vertex(int label) {
-            this.label = label;
-            state = MapEntry.unknown;
-            edges = 0;
-            adjacent = new Edge[4];
-            reset();
-        }
-
-        /**
-         * Reset the values used for Dijkstra's algorithm.
-         */
-        public void reset() {
-            visited = false;
-            distance = Double.POSITIVE_INFINITY;
-        }
-
-        /**
-         * Add an edge to this Vertex.
-         *
-         * @param newEdge the new edge to be added.
-         */
-        public void addEdge(Edge newEdge) {
-            adjacent[edges] = newEdge;
-            edges++;
-        }
-
-        /**
-         * Return this Vertex's MapEntry state.
-         *
-         * @return this Vertex's MapEntry state.
-         */
-        public MapEntry getState() {
-            return state;
-        }
-
-        /**
-         * Change this vertex's MapEntry state.
-         *
-         * @param newState the new state for the MapEntry.
-         */
-        public void setState(MapEntry newState) {
-            state = newState;
-        }
-
-        /**
-         * Compare this vertex to another. Used for the priority queues.
-         *
-         * @param other vertex to compare it to
-         * @return -1 if less, 1 if greater, otherwise 0.
-         */
-        public int compareTo(Vertex other) {
-            return Double.compare(distance, other.distance);
-        }
-    }
-
-    private class Edge {
-
-        public final Vertex target;
-
-        public Edge(Vertex target) {
-            this.target = target;
-        }
-    }
-
-    private class Dijkstra {
-
-        public Dijkstra() {
-        }
-
-        public void computePaths(Vertex source) {
-            source.distance = 0.;
-            PriorityQueue<Vertex> vertexQueue = new PriorityQueue<Vertex>();
-            vertexQueue.add(source);
-
-            while (!vertexQueue.isEmpty()) {
-                Vertex u = vertexQueue.poll();
-
-                // Visit each edge exiting u
-                for (Edge e : u.adjacent) {
-                    Vertex v = e.target;
-                    double weight = 1;
-                    double distanceThroughU = u.distance + weight;
-                    if (distanceThroughU < v.distance) {
-                        vertexQueue.remove(v);
-
-                        v.distance = distanceThroughU;
-                        v.parent = u;
-                        vertexQueue.add(v);
-                    }
-                }
-            }
-        }
-
-        /**
-         * Return a list of all the vertices you must visit for the shortest
-         * path to get to source.
-         *
-         * @param target the starting position, the agent's current position
-         * vertex.
-         * @return a list of each of the vertices the agent will traverse.
-         */
-        public List<Vertex> getShortestPathTo(Vertex target) {
-            List<Vertex> path = new LinkedList<Vertex>();
-            for (Vertex vertex = target; vertex != null; vertex = vertex.parent) {
-                path.add(vertex);
-            }
-
-            return path;
-        }
-    }
 
     /**
      * MapEntry will function as enumeration using a byte to represent the
@@ -186,6 +44,15 @@ public class DmnReflexModelAgent extends VacuumAgent {
     private enum MapEntry {
 
         unknown(false), obstacle(true, false), empty(false, false), clean(false, true);
+
+        /**
+         * Create a new MapEntry based on the current state of another MapEntry.
+         *
+         * @param other the MapEntry to copy.
+         */
+        MapEntry(MapEntry other) {
+            state = other.getState();
+        }
 
         /**
          * Create a new MapEntry which is checked if checked is true, otherwise
@@ -216,27 +83,27 @@ public class DmnReflexModelAgent extends VacuumAgent {
          *
          * @return this MapEntry's state.
          */
-        /*private byte getState() {
-         return state;
-         }*/
+        private byte getState() {
+            return state;
+        }
+
         /**
          * Compare equivalence of two MapEntry's by their state.
          *
          * @param other the other MapEntry to check for equivalence.
          * @return true if the MapEntry's have the same state.
          */
-        /*public boolean equals(MapEntry other) {
-         return (other.getState() == state);
-         }*/
+        public boolean equals(MapEntry other) {
+            return (other.getState() == state);
+        }
+
     }
 
     public DmnReflexModelAgent() {
-        pathComputer = new Dijkstra();
-        dirtyVertices = new LinkedList<Vertex>();
-        map = new Vertex[1000][1000];
+        map = new MapEntry[1000][1000];
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
-                map[i][j] = new Vertex(map[0].length * i + j);//MapEntry.unknown;
+                map[i][j] = MapEntry.unknown;
             }
         }
         direction = 0;
@@ -251,21 +118,15 @@ public class DmnReflexModelAgent extends VacuumAgent {
     private void checkAdjacentCells(VacuumBumpPercept percept) {
         for (int t = 0; t < 4; t++) {
             //if we don't know anything about this tile....
-            if (map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length].getState() == MapEntry.unknown) {
+            if (map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length] == MapEntry.unknown) {
                 //check if we will bump into it....
                 if (percept.willBump(movements[t])) {
                     //if so...mark obstacle on map
-                    map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length].setState(MapEntry.obstacle);
+                    map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length] = MapEntry.obstacle;
                 } else {
                     //otherwise, it's an empty space,but we don't know it's clean yet...we'll check that later
-                    map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length].setState(MapEntry.empty);
-                    if (t != direction) {
-                        dirtyVertices.add(map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length]);
-                    }
+                    map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length] = MapEntry.empty;
                 }
-                //add edges connecting it
-                map[(y + map.length) % map.length][(x + map[0].length) % map[0].length].addEdge(new Edge(map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length]));
-                map[(movementChanges[t] + y + map.length) % map.length][(movementChanges[t + 1] + x + map[0].length) % map[0].length].addEdge(new Edge(map[(y + map.length) % map.length][(x + map[0].length) % map[0].length]));
             }
         }
     }
@@ -296,7 +157,7 @@ public class DmnReflexModelAgent extends VacuumAgent {
         if (percept.dirtSensor() == Status.DIRTY) {
             //if the cell is dirty, clean it
             //update our map too
-            map[(y + map.length) % map.length][(x + map[0].length) % map[0].length].setState(MapEntry.clean);
+            map[(y + map.length) % map.length][(x + map[0].length) % map[0].length] = MapEntry.clean;
             System.out.println("Cleaning cell.");
             return VacuumAction.SUCK;
         } else {
@@ -306,7 +167,7 @@ public class DmnReflexModelAgent extends VacuumAgent {
             for (int t = 0; t < 4; t++) {
                 System.out.printf("Direction:%d\tX:%d\tY:%d\tMovementChanges:(%d,%d)\n", direction, (movementChanges[direction + 1] + x + map[0].length) % map[0].length, (movementChanges[direction] + y + map.length) % map.length, movementChanges[direction + 1], movementChanges[direction]);
                 //if we don't know if this tile is clean
-                if (map[(movementChanges[direction] + y + map.length) % map.length][(movementChanges[direction + 1] + x + map[0].length) % map[0].length].getState() == MapEntry.empty) {
+                if (map[(movementChanges[direction] + y + map.length) % map.length][(movementChanges[direction + 1] + x + map[0].length) % map[0].length] == MapEntry.empty) {
                     //Go that way!
                     x += movementChanges[direction + 1];
                     y += movementChanges[direction];
@@ -317,15 +178,6 @@ public class DmnReflexModelAgent extends VacuumAgent {
                     System.out.println("Cell is not empty, trying another cell.");
                     turn(true);
                 }
-            }
-
-            while (!dirtyVertices.isEmpty()) {
-                Vertex v = dirtyVertices.poll();
-                if (v.getState() == MapEntry.clean) {
-                    continue;
-                }
-                pathComputer.computePaths(v);
-                pathToDirt = pathComputer.getShortestPathTo(map[(y + map.length) % map.length][(x + map[0].length) % map[0].length]);
             }
             System.out.println("Dead end.");
         }
